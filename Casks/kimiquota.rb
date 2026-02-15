@@ -15,6 +15,9 @@ cask "kimiquota" do
     # Create bin directory
     FileUtils.mkdir_p "#{staged_path}/bin"
     
+    # Source directory (note: GitHub releases extract to Project-Version/)
+    source_dir = "#{staged_path}/KimiQuota-#{version}"
+    
     # Find Python path
     python_path = if File.exist?("#{HOMEBREW_PREFIX}/opt/python@3.12/bin/python3.12")
       "#{HOMEBREW_PREFIX}/opt/python@3.12/bin/python3.12"
@@ -29,25 +32,25 @@ cask "kimiquota" do
     # Create kimiquota wrapper
     File.write("#{staged_path}/bin/kimiquota", <<~EOS)
       #!/bin/bash
-      cd "#{staged_path}"
+      SOURCE_DIR="#{source_dir}"
       PYTHON="#{python_path}"
       if [ ! -f "$PYTHON" ]; then
         PYTHON="python3"
       fi
-      "$PYTHON" -c "import rumps" 2>/dev/null || "$PYTHON" -m pip install --user rumps requests 2>/dev/null || pip3 install --user rumps requests 2>/dev/null
-      exec "$PYTHON" "KimiQuotaMenuBar.app/Contents/MacOS/kimi_menu.py" "$@"
+      "$PYTHON" -c "import rumps" 2>/dev/null || "$PYTHON" -m pip install --user --break-system-packages rumps requests 2>/dev/null
+      exec "$PYTHON" "$SOURCE_DIR/KimiQuotaMenuBar.app/Contents/MacOS/kimi_menu.py" "$@"
     EOS
     FileUtils.chmod 0755, "#{staged_path}/bin/kimiquota"
     
     # Create kimiquota-cli wrapper
     File.write("#{staged_path}/bin/kimiquota-cli", <<~EOS)
       #!/bin/bash
-      cd "#{staged_path}"
+      SOURCE_DIR="#{source_dir}"
       PYTHON="#{python_path}"
       if [ ! -f "$PYTHON" ]; then
         PYTHON="python3"
       fi
-      exec "$PYTHON" "kimi_quota.py" "$@"
+      exec "$PYTHON" "$SOURCE_DIR/kimi_quota.py" "$@"
     EOS
     FileUtils.chmod 0755, "#{staged_path}/bin/kimiquota-cli"
   end
@@ -65,7 +68,7 @@ cask "kimiquota" do
       kimiquota-cli
     
     Note: You may need to install dependencies manually:
-      pip3 install rumps requests
+      /opt/homebrew/bin/python3.12 -m pip install --user --break-system-packages rumps requests
     
     Make sure you have logged in to Kimi CLI first:
       kimi login
